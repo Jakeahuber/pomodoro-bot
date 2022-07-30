@@ -12,7 +12,7 @@ public class Main {
         JDABuilder.createLight(token, GatewayIntent.GUILD_MESSAGES, GatewayIntent.DIRECT_MESSAGES,
                                GatewayIntent.MESSAGE_CONTENT)
                 .addEventListeners(new Bot(databaseConnector))
-                .setActivity(Activity.playing("Type '!pomodoro-25-5' to get started or '!pomodoro-info' to get a list of all commands!"))
+                .setActivity(Activity.playing("Type '!pomodoro-info' to get started!"))
                 .build();
     }
 }

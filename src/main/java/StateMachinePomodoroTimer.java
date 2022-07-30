@@ -18,17 +18,19 @@ public class StateMachinePomodoroTimer extends ListenerAdapter {
     private ScheduledFuture<?> scheduledBreakTimer;
     private HashSet<String> userIdsInSession;
     private Bot bot;
+    private int breakTime;
 
-    public StateMachinePomodoroTimer(MessageChannel channel, String userId, MongoCollection col, Bot bot) {
+    public StateMachinePomodoroTimer(MessageChannel channel, String userId, Bot bot, int studyTime, int breakTime) {
         this.channel = channel;
         this.userId = userId;
-        this.col = col;
-        this.endTime = Instant.now().plus(100, ChronoUnit.SECONDS);
+        this.col = bot.getCol();
+        this.endTime = Instant.now().plus(studyTime, ChronoUnit.MINUTES);
         this.scheduledStudyTimer = null;
         this.scheduledBreakTimer = null;
         this.bot = bot;
         this.userIdsInSession = new HashSet<>();
         userIdsInSession.add(userId);
+        this.breakTime = breakTime;
     }
 
     @Override
@@ -41,7 +43,7 @@ public class StateMachinePomodoroTimer extends ListenerAdapter {
 
             // Update end time to be break time if the studying time is over.
             if (currentTime.compareTo(endTime) > 0) {
-                endTime = endTime.plus(25, ChronoUnit.SECONDS);
+                endTime = endTime.plus(breakTime, ChronoUnit.MINUTES);
             }
             Duration timeLeft = Duration.between(currentTime, endTime);
             long millis = timeLeft.toMillis();
@@ -63,7 +65,12 @@ public class StateMachinePomodoroTimer extends ListenerAdapter {
             channel.sendMessage("Only the user who started the pomodoro timer can cancel it.").queue();
         }
         else if (message.equals("!add-to-pomo") && !userIdsInSession.contains(event.getAuthor().getId())) {
+            if (userIdsInSession.size() >= 15) {
+                channel.sendMessage("The current pomodoro session has reached maximum capacity.").queue();
+                return;
+            }
             bot.addToUserIdsToUpdate(event.getAuthor().getId());
+            userIdsInSession.add(event.getAuthor().getId());
             channel.sendMessage("<@" + event.getAuthor().getId() + ">, you've been added to the pomodoro timer!").queue();
         }
         else if (message.equals("!add-to-pomo") && userIdsInSession.contains(event.getAuthor().getId())) {

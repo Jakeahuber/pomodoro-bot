@@ -36,7 +36,7 @@ public class StateMachineChangeTimeZone extends ListenerAdapter {
                                                   "EST", "IET", "PRT", "CNT", "AGT", "BET", "CAT"));
 
         if (timeZones.contains(message.toUpperCase())) {
-            BasicDBObject query = new BasicDBObject("_id", "test5");
+            BasicDBObject query = new BasicDBObject("_id", userId);
             Document user_doc = (Document) col.find(query).first();
             UpdateOptions options = new UpdateOptions().upsert(true);
             Bson updatedDoc = Updates.combine(Updates.set("time_zone", message.toUpperCase()));
@@ -46,7 +46,7 @@ public class StateMachineChangeTimeZone extends ListenerAdapter {
                 channel.sendMessage("Pomodoro bot was unable to update total time studied due to an error.");
             }
             event.getJDA().removeEventListener(this);
-            channel.sendMessage("<@" + event.getAuthor().getId() + ">, your timezone was changed to " + message + "!").queue();
+            channel.sendMessage("<@" + event.getAuthor().getId() + ">, your timezone was changed to " + message.toUpperCase() + "!").queue();
         } else {
             channel.sendMessage("<@" + event.getAuthor().getId() + ">, please enter a valid timezone.").queue();
         }
