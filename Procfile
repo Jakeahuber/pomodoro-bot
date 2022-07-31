@@ -1,1 +1,1 @@
-Worker: java src/main/java/Main.java 
+Worker: java -jar out/artifacts/pomodoro_bot_jar/pomodoro-bot.jar
