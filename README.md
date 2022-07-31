@@ -103,7 +103,7 @@ The users that call '!add-to-pomo' will also notice their '!get-time-studied' an
 
 This bot was created using the following technologies:
 - The Java Discord API (JDA) for setting up the bot
-- MongoDB for storing study time information
+- MongoDB for storing studying time statistics
 - Heroku for deploying the bot onto a server
 
 ## Feedback
