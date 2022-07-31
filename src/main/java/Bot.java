@@ -165,7 +165,6 @@ public class Bot extends ListenerAdapter {
             event.getJDA().addEventListener(listener);
             Runnable cancelListener = () -> {
                 event.getJDA().removeEventListener(listener);
-                channel.sendMessage(event.getAuthor().getName() + ", you waited too long to set your time zone! Please call '!pomo-set-time-zone' to try again.").queue();
             };
             ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
             scheduledExecutorService.schedule(cancelListener , 1, TimeUnit.MINUTES);
