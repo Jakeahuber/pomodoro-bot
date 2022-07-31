@@ -1,25 +1,20 @@
 import com.mongodb.BasicDBObject;
-import com.mongodb.MongoException;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.UpdateOptions;
-import com.mongodb.client.model.Updates;
 import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.bson.Document;
-import org.bson.conversions.Bson;
 
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class Bot extends ListenerAdapter {
@@ -27,39 +22,48 @@ public class Bot extends ListenerAdapter {
     private MongoClient client;
     private MongoDatabase db;
     private MongoCollection col;
-    private HashSet<String> userIdsToUpdate;
     private boolean timerActive;
+    private Hashtable<String, Boolean> timerActiveInServer;
+    private Hashtable<String, HashSet<String>> userIdsToUpdate;
 
     public Bot(String databaseConnector) {
         this.client = MongoClients.create(databaseConnector);
         this.db = client.getDatabase("discord-db");
         this.col = db.getCollection("discord-collection");
-        this.userIdsToUpdate = new HashSet<>();
+        this.userIdsToUpdate = new Hashtable<>();
         this.timerActive = false;
+        this.timerActiveInServer = new Hashtable<>();
     }
 
-    public void addToUserIdsToUpdate(String id) {
-        userIdsToUpdate.add(id);
+    public void addToUserIdsToUpdate(String serverId, String id) {
+        if (userIdsToUpdate.containsKey(serverId)) {
+            HashSet<String> set = userIdsToUpdate.get(serverId);
+            set.add(id);
+            userIdsToUpdate.put(serverId, set);
+        }
+        else {
+            HashSet<String> set = new HashSet<>();
+            set.add(id);
+            userIdsToUpdate.put(serverId, set);
+        }
     }
 
     public MongoCollection getCol() {
         return col;
     }
 
-    public boolean getTimerActive() {
-        return timerActive;
+    public HashSet<String> getUserIdsToUpdate(String serverId) {
+        if (userIdsToUpdate.containsKey(serverId)) {
+            return userIdsToUpdate.get(serverId);
+        }
+        return null;
     }
 
-    public HashSet<String> getUserIdsToUpdate() {
-        return userIdsToUpdate;
-    }
-
-    public void resetIdsToUpdate() {
-        this.userIdsToUpdate = new HashSet<>();
-    }
-
-    public void setTimerActive(boolean res) {
-        this.timerActive = res;
+    public void resetIdsToUpdate(String serverId) {
+        if (userIdsToUpdate.containsKey(serverId)) {
+            HashSet<String> set = new HashSet<>();
+            userIdsToUpdate.put(serverId, set);
+        }
     }
 
     public Document getUserById(String id) {
@@ -85,6 +89,14 @@ public class Bot extends ListenerAdapter {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMM. dd, YYYY", Locale.US);
         simpleDateFormat.setTimeZone(tz);
         return simpleDateFormat.format(time.getTime());
+    }
+
+    public Hashtable<String, Boolean> getTimerActiveInServer() {
+        return timerActiveInServer;
+    }
+
+    public void updateTimerActiveInServer(String serverId, boolean isActive) {
+        timerActiveInServer.put(serverId, isActive);
     }
 
     @Override
@@ -162,7 +174,8 @@ public class Bot extends ListenerAdapter {
         }
 
         if (msg.getContentRaw().equals("!pomo-time") || msg.getContentRaw().equals("!quit-pomo") || msg.getContentRaw().equals("!add-to-pomo")) {
-            if (!timerActive) {
+            String serverId = event.getGuild().getId();
+            if (!timerActiveInServer.containsKey(serverId) || !timerActiveInServer.get(serverId)) {
                 MessageChannel channel = event.getChannel();
                 channel.sendMessage("There is no timer currently running. You can call '!pomodoro-25-5' to start one.").queue();
             }
@@ -192,8 +205,6 @@ public class Bot extends ListenerAdapter {
             for (int i = 0; i < commands.size(); i++) {
                 commandsString += commands.get(i);
             }
-
-            String availableTimers = "";
 
             channel.sendMessage("Hello! Welcome to Pomodoro Bot! This bot allows you to set study timers " +
                                 "(Pomodoros) and keeps track of how many hours you study. If you would like to " +
