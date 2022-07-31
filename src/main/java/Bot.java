@@ -175,7 +175,7 @@ public class Bot extends ListenerAdapter {
             String serverId = PomodoroTimer.getServerId(event);
             if (!timerActiveInServer.containsKey(serverId) || !timerActiveInServer.get(serverId)) {
                 MessageChannel channel = event.getChannel();
-                channel.sendMessage("There is no timer currently running. You can call '!pomodoro-25-5' to start one.").queue();
+                channel.sendMessage("There is no timer currently running. Call '!pomodoro-25-5' to start one.").queue();
             }
         }
 
