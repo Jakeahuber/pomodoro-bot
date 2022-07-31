@@ -1,6 +1,7 @@
 import com.mongodb.MongoException;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
+import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.bson.Document;
@@ -18,7 +19,7 @@ public class PomodoroTimer {
     public static void setTimer(MessageReceivedEvent event, Bot bot, int studyTime, int breakTime) {
         MessageChannel channel = event.getChannel();
         Hashtable<String, Boolean> timerActiveInServer = bot.getTimerActiveInServer();
-        String serverId = event.getGuild().getId();
+        String serverId = getServerId(event);
 
         // There can only be one pomodoro running at a time.
         if (timerActiveInServer.containsKey(serverId) && timerActiveInServer.get(serverId)) {
@@ -91,5 +92,15 @@ public class PomodoroTimer {
         ScheduledFuture<?> scheduledBreakTimer = scheduledExecutorService.schedule(afterBreak , studyTime + breakTime, TimeUnit.MINUTES);
         listener.addScheduledExecutors(scheduledStudyTimer, scheduledBreakTimer);
         event.getJDA().addEventListener(listener);
+    }
+
+    public static String getServerId(MessageReceivedEvent event) {
+        MessageChannel channel = event.getChannel();
+        if (channel.getType() == ChannelType.PRIVATE) {
+            return event.getAuthor().getId(); // use the author's id if the event is in a DM
+        }
+        else {
+            return event.getGuild().getId();
+        }
     }
 }

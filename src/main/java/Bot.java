@@ -22,7 +22,6 @@ public class Bot extends ListenerAdapter {
     private MongoClient client;
     private MongoDatabase db;
     private MongoCollection col;
-    private boolean timerActive;
     private Hashtable<String, Boolean> timerActiveInServer;
     private Hashtable<String, HashSet<String>> userIdsToUpdate;
 
@@ -31,7 +30,6 @@ public class Bot extends ListenerAdapter {
         this.db = client.getDatabase("discord-db");
         this.col = db.getCollection("discord-collection");
         this.userIdsToUpdate = new Hashtable<>();
-        this.timerActive = false;
         this.timerActiveInServer = new Hashtable<>();
     }
 
@@ -174,7 +172,7 @@ public class Bot extends ListenerAdapter {
         }
 
         if (msg.getContentRaw().equals("!pomo-time") || msg.getContentRaw().equals("!quit-pomo") || msg.getContentRaw().equals("!add-to-pomo")) {
-            String serverId = event.getGuild().getId();
+            String serverId = PomodoroTimer.getServerId(event);
             if (!timerActiveInServer.containsKey(serverId) || !timerActiveInServer.get(serverId)) {
                 MessageChannel channel = event.getChannel();
                 channel.sendMessage("There is no timer currently running. You can call '!pomodoro-25-5' to start one.").queue();

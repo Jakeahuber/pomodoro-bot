@@ -54,7 +54,7 @@ public class StateMachinePomodoroTimer extends ListenerAdapter {
             channel.sendMessage("There are " + wholeMinutes + " minutes and " + seconds + " seconds left.").queue();
         }
         else if (message.equals("!quit-pomo") && event.getAuthor().getId().equals(userId)) {
-            String serverId = event.getGuild().getId();
+            String serverId = PomodoroTimer.getServerId(event);
             scheduledStudyTimer.cancel(false);
             scheduledBreakTimer.cancel(false);
             bot.resetIdsToUpdate(serverId);
@@ -70,7 +70,7 @@ public class StateMachinePomodoroTimer extends ListenerAdapter {
                 channel.sendMessage("The current pomodoro session has reached maximum capacity.").queue();
                 return;
             }
-            String serverId = event.getGuild().getId();
+            String serverId = PomodoroTimer.getServerId(event);
             bot.addToUserIdsToUpdate(serverId, event.getAuthor().getId());
             userIdsInSession.add(event.getAuthor().getId());
             channel.sendMessage("<@" + event.getAuthor().getId() + ">, you've been added to the pomodoro timer!").queue();
